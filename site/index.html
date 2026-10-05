@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#16202c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="SWU Trade">
+<meta name="description" content="Simulador de tradeos de Star Wars: Unlimited con precios de TCGplayer actualizados a diario.">
+<title>SWU Trade Machine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://tcgplayer-cdn.tcgplayer.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+html{-webkit-text-size-adjust:100%}body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+/* Layout: marcador tipo "trade machine" — dos columnas enfrentadas (Persona 1 rebelde / Persona 2 imperial) con un medidor central de balance */
+:root{
+  --bg:#eef1f5; --panel:#ffffff; --line:#d5dbe4; --fg:#16202c; --muted:#5b6878;
+  --p1:#c4452b; --p1-soft:#fbe9e4; --p2:#2d5d8c; --p2-soft:#e3edf7;
+  --good:#2e7d4f; --warn:#b7791f; --bad:#b83232; --chip:#e6eaf0;
+  --display:"Saira Condensed","Arial Narrow",sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f141b; --panel:#18202a; --line:#2b3644; --fg:#e7ecf2; --muted:#93a1b2;
+  --p1:#ec6a4f; --p1-soft:#3a201b; --p2:#6ea4dd; --p2-soft:#18283a;
+  --good:#5cc489; --warn:#e3a94b; --bad:#ec6a6a; --chip:#232d3a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f141b; --panel:#18202a; --line:#2b3644; --fg:#e7ecf2; --muted:#93a1b2;
+  --p1:#ec6a4f; --p1-soft:#3a201b; --p2:#6ea4dd; --p2-soft:#18283a;
+  --good:#5cc489; --warn:#e3a94b; --bad:#ec6a6a; --chip:#232d3a; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.45 var(--body);padding-inline:16px;padding-block:20px 48px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:18px}
+header{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between}
+h1{font:800 clamp(30px,5vw,44px)/1 var(--display);letter-spacing:.01em;margin:0;text-transform:uppercase;text-wrap:balance}
+h1 span{color:var(--p1)} h1 b{color:var(--p2);font-weight:800}
+.sub{color:var(--muted);margin:6px 0 0;font-size:13.5px}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button,.btn{font:600 13px var(--body);border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;padding:7px 12px;cursor:pointer}
+button:hover{border-color:var(--muted)}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--p2);outline-offset:2px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{border:0;border-radius:0;padding:6px 10px}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.fx{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.fx input{width:76px}
+input,select{font:14px var(--body);color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:7px 9px;min-width:0}
+
+/* Balance */
+.meter{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:12px}
+.score{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center}
+.score .side{display:grid;gap:2px}
+.score .side.r{text-align:right}
+.score .who{font:600 13px var(--body);color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.score .amt{font:800 clamp(28px,6vw,42px)/1 var(--display);font-variant-numeric:tabular-nums}
+.score .p1 .amt{color:var(--p1)} .score .p2 .amt{color:var(--p2)}
+.verdict{text-align:center;display:grid;gap:4px;justify-items:center}
+.pill{font:700 12px var(--body);text-transform:uppercase;letter-spacing:.07em;padding:5px 10px;border-radius:999px;color:#fff;white-space:nowrap}
+.pill.good{background:var(--good)} .pill.warn{background:var(--warn)} .pill.bad{background:var(--bad)} .pill.idle{background:var(--muted)}
+.diff{font:500 13px var(--mono);color:var(--muted)}
+.bar{position:relative;height:12px;border-radius:999px;background:var(--chip);overflow:hidden;display:flex}
+.bar i{display:block;height:100%;transition:width .35s ease}
+.bar .a{background:var(--p1)} .bar .b{background:var(--p2)}
+.bar:after{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:2px;background:var(--fg);opacity:.55}
+.hint{font-size:13.5px;color:var(--muted);text-align:center;margin:0}
+
+/* Personas */
+.board{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media (max-width:760px){.board{grid-template-columns:1fr}.score{grid-template-columns:1fr 1fr}.verdict{grid-column:1/-1;order:3}}
+.person{background:var(--panel);border:1px solid var(--line);border-radius:10px;display:grid;grid-template-rows:auto auto 1fr auto;min-width:0;overflow:hidden}
+.person .top{display:flex;gap:10px;align-items:center;padding:12px 14px;border-bottom:3px solid var(--c)}
+.person .top input{font:800 22px var(--display);text-transform:uppercase;border:0;background:transparent;padding:2px 4px;flex:1;color:var(--c);letter-spacing:.02em}
+.person .gives{font:600 11px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.search{position:relative;padding:12px 14px;display:grid;gap:8px;background:var(--soft)}
+.search .row{display:flex;gap:8px}
+.search .row input{flex:1}
+.search select{max-width:44%}
+.results{position:absolute;left:14px;right:14px;top:calc(100% - 6px);z-index:5;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 12px 28px rgba(0,0,0,.18);max-height:340px;overflow:auto}
+.res{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:8px 10px;border-bottom:1px solid var(--line);cursor:pointer;width:100%;text-align:left;background:none;border-radius:0;border-left:0;border-right:0;border-top:0;font-weight:400}
+.res:hover,.res.on{background:var(--soft)}
+.res .n{font-weight:600;min-width:0}
+.res .m{grid-column:1;font-size:12px;color:var(--muted)}
+.res .p{grid-row:1/3;grid-column:2;align-self:center;font:500 13px var(--mono);text-align:right;display:grid;gap:2px}
+.res .p small{color:var(--muted);font-size:11px}
+.empty-res{padding:12px;color:var(--muted);font-size:13px}
+ul.cards{list-style:none;margin:0;padding:6px 0;min-height:120px}
+.card{display:grid;grid-template-columns:auto 1fr auto;gap:4px 10px;padding:10px 14px;align-items:center;border-bottom:1px solid var(--line)}
+.card:last-child{border-bottom:0}
+.rar{width:26px;height:26px;border-radius:5px;display:grid;place-items:center;font:700 12px var(--mono);color:#fff;background:var(--muted)}
+.rar.L{background:#b8892c}.rar.R{background:#8f3a3a}.rar.S{background:#4b6a91}.rar.U{background:#5d7a62}.rar.C{background:#6b6f76}.rar.X{background:var(--fg);color:var(--bg);width:40px;height:56px}
+.card .info{min-width:0}
+.card .nm{font-weight:600;overflow-wrap:anywhere}
+.card .meta{font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center}
+.card .meta a{color:inherit}
+.tag{background:var(--chip);border-radius:4px;padding:1px 6px;font:500 11px var(--mono);color:var(--fg)}
+.card .rt{display:grid;justify-items:end;gap:6px}
+.card .price{font:500 15px var(--mono);font-variant-numeric:tabular-nums}
+.qty{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.qty button{border:0;border-radius:0;padding:3px 9px;font-size:14px}
+.qty span{min-width:22px;text-align:center;font:500 13px var(--mono)}
+.x{border:0;background:none;color:var(--muted);padding:3px 6px;font-size:13px}
+.x:hover{color:var(--bad)}
+.vsel{font-size:12px;padding:3px 6px}
+.blank{padding:26px 14px;color:var(--muted);font-size:14px;text-align:center}
+.foot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+.foot strong{font:500 15px var(--mono);color:var(--fg)}
+details.custom summary{cursor:pointer;color:var(--fg);font-weight:600;font-size:13px}
+.custom form{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.custom input[name=n]{flex:1 1 160px}.custom input[name=p]{width:90px}
+.note{font-size:12.5px;color:var(--muted);line-height:1.5;max-width:75ch}
+.thumb{width:40px;height:56px;border-radius:4px;background-color:var(--chip);background-repeat:no-repeat;border:1px solid var(--line);padding:0;cursor:zoom-in;flex:none;display:block}
+.thumb:hover{border-color:var(--fg)}
+.res{grid-template-columns:auto 1fr auto}
+.res .rt-thumb{grid-row:1/3;width:26px;height:36px;border-radius:3px;background-color:var(--chip);background-repeat:no-repeat;align-self:center}
+.res .n,.res .m{grid-column:2}
+.res .p{grid-column:3}
+.zoom{position:fixed;z-index:20;width:240px;height:334px;border-radius:12px;background-color:var(--chip);background-repeat:no-repeat;box-shadow:0 18px 40px rgba(0,0,0,.35);pointer-events:none}
+.lb{position:fixed;inset:0;z-index:30;background:rgba(8,12,18,.78);display:grid;place-items:center;padding:16px}
+.lb .box{display:grid;gap:10px;justify-items:center;max-width:100%}
+.lb .img{width:min(320px,82vw);aspect-ratio:300/418;border-radius:14px;background-repeat:no-repeat;background-color:var(--chip);box-shadow:0 20px 50px rgba(0,0,0,.5)}
+.lb .cap{color:#fff;text-align:center;font-size:14px;max-width:min(360px,90vw)}
+.lb .cap small{display:block;color:#c9d2dd;font-size:12.5px;margin-top:2px}
+.lb button{background:#fff;color:#16202c;border-color:#fff}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:6px;font-size:13px}
+.example{font:700 11px var(--body);text-transform:uppercase;letter-spacing:.08em;color:var(--warn)}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+
+.thumb{position:relative;overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.res .rt-thumb{overflow:hidden}
+.res .rt-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.zoom img,.lb .img img{width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit}
+.zoom,.lb .img{overflow:hidden}
+.loading{padding:40px 16px;text-align:center;color:var(--muted)}
+.foot-note{display:flex;flex-wrap:wrap;gap:4px 14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1><span>SWU</span> Trade <b>Machine</b></h1>
+      <p class="sub">Arma un tradeo de Star Wars: Unlimited y compara el valor de lo que da cada persona. <span id="asof">Cargando precios…</span></p>
+    </div>
+    <div class="tools">
+      <div class="seg" role="group" aria-label="Moneda">
+        <button id="cur-usd" aria-pressed="true">USD</button><button id="cur-clp" aria-pressed="false">CLP</button>
+      </div>
+      <label class="fx" id="fxwrap" hidden>1 USD = <input id="fx" type="number" min="1" step="1" value="950"> CLP</label>
+      <button id="copy">Copiar resumen</button>
+      <button id="reset">Nuevo tradeo</button>
+    </div>
+  </header>
+
+  <section class="meter" aria-live="polite">
+    <div class="score">
+      <div class="side p1"><span class="who" id="w1">Persona 1 da</span><span class="amt" id="t1">$0</span></div>
+      <div class="verdict"><span class="pill idle" id="pill">Agrega cartas</span><span class="diff" id="diff">—</span></div>
+      <div class="side p2 r"><span class="who" id="w2">Persona 2 da</span><span class="amt" id="t2">$0</span></div>
+    </div>
+    <div class="bar" aria-hidden="true"><i class="a" id="ba" style="width:50%"></i><i class="b" id="bb" style="width:50%"></i></div>
+    <p class="hint" id="hint">Busca una carta en cada lado para empezar.</p>
+  </section>
+
+  <div class="board" id="board"><div class="loading" id="loading">Cargando cartas y precios…</div></div>
+
+  <p class="note">Valores = precio de mercado de TCGplayer, actualizado automáticamente cada día (vía tcgcsv.com). Imágenes de TCGplayer. Pasa el mouse sobre una miniatura para agrandarla o tócala para verla en grande. El veredicto es "Justo" si la diferencia es de hasta 10% del lado mayor. Tu tradeo queda guardado en este dispositivo.</p>
+</div>
+<div class="toast" id="toast" hidden></div>
+<div class="zoom" id="zoom" hidden aria-hidden="true"><img id="zoomimg" alt=""></div>
+<div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Imagen de la carta">
+  <div class="box"><div class="img"><img id="lbimg" alt=""></div><div class="cap" id="lbcap"></div><button id="lbclose">Cerrar</button></div>
+</div>
+
+<script>
+(async function(){
+const RAR={L:"Legendaria",R:"Rara",S:"Especial",U:"Infrecuente",C:"Común",P:"Promo"};
+const norm=s=>s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+const img=(pid,w)=>`https://tcgplayer-cdn.tcgplayer.com/product/${pid}_${w}w.jpg`;
+function esc(s){return String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));}
+
+// ---- Datos ----
+let DATA;
+try{DATA=await fetch("data/cards.json",{cache:"no-cache"}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json();});}
+catch(e){document.getElementById("loading").textContent="No se pudieron cargar los precios. Revisa tu conexión y recarga la página.";document.getElementById("asof").textContent="";return;}
+const SETS={},SETABBR={},SETORDER={};
+DATA.sets.forEach(([gid,name,abbr],i)=>{SETS[gid]=name;SETABBR[gid]=abbr||name.split(/\s+/).map(w=>w[0]).join("").slice(0,5).toUpperCase();SETORDER[gid]=i;});
+const CARDS=DATA.cards.map(([name,gid,num,r,pid,N,F],id)=>{const c={id,name,set:gid,num,r,pid,N,F};c.k=norm(name+" "+(SETABBR[gid]||"")+" "+(SETS[gid]||"")+" "+num);c.max=Math.max(N||0,F||0);return c;});
+const BYPID=new Map(CARDS.map(c=>[c.pid,c]));
+const d=new Date(DATA.updated);
+document.getElementById("asof").textContent=`Precios de mercado TCGplayer al ${d.toLocaleDateString("es-CL",{day:"numeric",month:"short",year:"numeric"})} · ${CARDS.length.toLocaleString("es-CL")} cartas.`;
+
+// ---- Estado (se guarda por productId para sobrevivir a las actualizaciones) ----
+const KEY="swu-trade-v2";
+function exampleState(){
+  const s=[[{pid:540439,v:"F",q:1}],[{pid:540473,v:"F",q:1},{pid:540413,v:"N",q:1}]].map(side=>side.filter(it=>BYPID.has(it.pid)));
+  return {names:["Persona 1","Persona 2"],example:true,sides:s};
+}
+let S=null;
+try{const raw=localStorage.getItem(KEY);if(raw)S=JSON.parse(raw);}catch(e){}
+if(!S||!S.sides)S=exampleState();
+S.sides=S.sides.map(side=>side.filter(it=>it.custom||BYPID.has(it.pid)));
+let cur="USD",fx=950;
+try{const p=JSON.parse(localStorage.getItem(KEY+"-cur")||"{}");if(p.cur)cur=p.cur;if(p.fx)fx=p.fx;}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S));localStorage.setItem(KEY+"-cur",JSON.stringify({cur,fx}));}catch(e){}};
+
+const money=v=>cur==="USD"?"$"+v.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}):"$"+Math.round(v*fx).toLocaleString("es-CL")+" CLP";
+const card=it=>BYPID.get(it.pid);
+const itemPrice=it=>{if(it.custom)return it.price;const c=card(it);return (it.v==="F"?c.F:c.N)??c.N??c.F??0;};
+const itemName=it=>it.custom?it.name:card(it).name;
+const total=i=>S.sides[i].reduce((a,it)=>a+itemPrice(it)*it.q,0);
+const tcgLink=pid=>`https://www.tcgplayer.com/product/${pid}`;
+
+// ---- Paneles ----
+const board=document.getElementById("board");board.innerHTML="";
+const setOpts='<option value="">Todas las expansiones</option>'+DATA.sets.map(([gid,name])=>`<option value="${gid}">${esc(name)}</option>`).join("");
+[0,1].forEach(i=>{
+  const el=document.createElement("section");
+  el.className="person";el.style.setProperty("--c",i?"var(--p2)":"var(--p1)");el.style.setProperty("--soft",i?"var(--p2-soft)":"var(--p1-soft)");
+  el.innerHTML=`<div class="top"><input id="name${i}" aria-label="Nombre de la persona ${i+1}" maxlength="24"><span class="gives">entrega</span></div>
+  <div class="search">
+    <div class="row"><input id="q${i}" type="search" placeholder="Buscar carta (ej: vader hyperspace)" autocomplete="off" aria-label="Buscar carta"><select id="s${i}" aria-label="Filtrar por expansión">${setOpts}</select></div>
+    <div class="results" id="r${i}" hidden role="listbox"></div>
+    <details class="custom"><summary>Carta manual (nombre y precio propio)</summary>
+      <form id="f${i}"><input name="n" id="cn${i}" placeholder="Nombre de la carta" required><input name="p" id="cp${i}" type="number" step="0.01" min="0" placeholder="US$" required><button>Agregar</button></form>
+    </details>
+  </div>
+  <ul class="cards" id="l${i}"></ul>
+  <div class="foot"><span id="c${i}">0 cartas</span><span>Total <strong id="ft${i}">$0</strong></span></div>`;
+  board.appendChild(el);
+  const name=el.querySelector("#name"+i);name.value=S.names[i];
+  name.addEventListener("input",()=>{S.names[i]=name.value||("Persona "+(i+1));save();renderMeter();});
+  const q=el.querySelector("#q"+i),sel=el.querySelector("#s"+i),res=el.querySelector("#r"+i);
+  let hits=[],hi=0;
+  const search=()=>{
+    const t=norm(q.value).split(/\s+/).filter(Boolean),st=sel.value?+sel.value:null;
+    if(!t.length&&!st){res.hidden=true;return;}
+    hits=CARDS.filter(c=>(!st||c.set===st)&&t.every(w=>c.k.includes(w)));
+    const first=t[0]||"";
+    hits.sort((a,b)=>(norm(b.name).startsWith(first)-norm(a.name).startsWith(first))||b.max-a.max);
+    hits=hits.slice(0,40);hi=0;
+    res.innerHTML=hits.length?hits.map((c,j)=>`<button type="button" class="res${j===0?" on":""}" data-j="${j}" role="option"><span class="rt-thumb"><img loading="lazy" src="${img(c.pid,200)}" alt=""></span><span class="n">${esc(c.name)}</span><span class="m">${esc(SETS[c.set]||"")} · ${RAR[c.r]||c.r}${c.num?" · #"+esc(c.num):""}</span><span class="p">${c.N!=null?`<span>${money(c.N)}</span>`:""}${c.F!=null?`<span>${money(c.F)} <small>foil</small></span>`:""}</span></button>`).join(""):`<div class="empty-res">Sin resultados. Usa "Carta manual" para agregarla con tu propio precio.</div>`;
+    res.hidden=false;
+  };
+  const pick=j=>{const c=hits[j];if(!c)return;S.example=false;
+    S.sides[i].push({pid:c.pid,v:c.N!=null?"N":"F",q:1});q.value="";res.hidden=true;save();render();q.focus();};
+  q.addEventListener("input",search);sel.addEventListener("change",()=>{search();q.focus();});
+  q.addEventListener("keydown",e=>{
+    if(res.hidden)return;
+    if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();hi=Math.max(0,Math.min(hits.length-1,hi+(e.key==="ArrowDown"?1:-1)));res.querySelectorAll(".res").forEach((b,k)=>b.classList.toggle("on",k===hi));res.querySelector(".res.on")?.scrollIntoView({block:"nearest"});}
+    else if(e.key==="Enter"){e.preventDefault();pick(hi);}
+    else if(e.key==="Escape"){res.hidden=true;}
+  });
+  res.addEventListener("mousedown",e=>e.preventDefault());
+  res.addEventListener("click",e=>{const b=e.target.closest(".res");if(b)pick(+b.dataset.j);});
+  q.addEventListener("blur",()=>setTimeout(()=>res.hidden=true,150));
+  q.addEventListener("focus",()=>{if(q.value||sel.value)search();});
+  el.querySelector("#f"+i).addEventListener("submit",e=>{e.preventDefault();const f=e.target;const n=f.n.value.trim(),p=parseFloat(f.p.value);if(!n||!(p>=0))return;
+    S.example=false;S.sides[i].push({custom:true,name:n,price:cur==="CLP"?p/fx:p,q:1});f.reset();save();render();});
+  el.querySelector("#l"+i).addEventListener("click",e=>{
+    const b=e.target.closest("button[data-a]");if(!b)return;const k=+b.dataset.k,it=S.sides[i][k];
+    if(b.dataset.a==="del")S.sides[i].splice(k,1);
+    if(b.dataset.a==="inc")it.q=Math.min(99,it.q+1);
+    if(b.dataset.a==="dec")it.q=Math.max(1,it.q-1);
+    S.example=false;save();render();});
+  el.querySelector("#l"+i).addEventListener("change",e=>{const s=e.target.closest("select[data-k]");if(!s)return;S.sides[i][+s.dataset.k].v=s.value;save();render();});
+});
+
+// ---- Imágenes: hover (computador) y lightbox (click / toque) ----
+const zoom=document.getElementById("zoom"),zoomimg=document.getElementById("zoomimg"),lb=document.getElementById("lb");
+const canHover=matchMedia("(hover:hover) and (pointer:fine)").matches;
+board.addEventListener("mouseover",e=>{const t=e.target.closest(".thumb");if(!t||!canHover)return;
+  const r=t.getBoundingClientRect(),W=240,H=334;let x=r.right+12;if(x+W>innerWidth-8)x=r.left-W-12;
+  const y=Math.min(Math.max(8,r.top+r.height/2-H/2),innerHeight-H-8);
+  zoomimg.src=img(t.dataset.pid,400);zoom.style.left=Math.max(8,x)+"px";zoom.style.top=y+"px";zoom.hidden=false;});
+board.addEventListener("mouseout",e=>{if(e.target.closest(".thumb"))zoom.hidden=true;});
+board.addEventListener("click",e=>{const t=e.target.closest(".thumb");if(!t)return;zoom.hidden=true;
+  const c=BYPID.get(+t.dataset.pid);document.getElementById("lbimg").src=img(c.pid,400);lb.hidden=false;
+  document.getElementById("lbcap").innerHTML=`${esc(c.name)}<small>${esc(SETS[c.set]||"")} · ${RAR[c.r]||c.r}${c.N!=null?" · Normal "+money(c.N):""}${c.F!=null?" · Foil "+money(c.F):""}</small>`;
+  document.getElementById("lbclose").focus();});
+lb.addEventListener("click",e=>{if(e.target===lb||e.target.id==="lbclose")lb.hidden=true;});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!lb.hidden)lb.hidden=true;});
+
+// ---- Render ----
+function qty(k,n){return `<span class="qty"><button data-a="dec" data-k="${k}" aria-label="Quitar una">−</button><span>${n}</span><button data-a="inc" data-k="${k}" aria-label="Agregar una">+</button></span><button class="x" data-a="del" data-k="${k}" aria-label="Eliminar">✕</button>`;}
+function renderList(i){
+  const ul=document.getElementById("l"+i),L=S.sides[i];
+  if(!L.length)ul.innerHTML=`<li class="blank">Todavía no hay cartas. Búscalas arriba.</li>`;
+  else ul.innerHTML=L.map((it,k)=>{
+    const p=itemPrice(it);
+    if(it.custom)return `<li class="card"><span class="rar X" title="Manual">M</span><div class="info"><div class="nm">${esc(it.name)}</div><div class="meta"><span class="tag">Manual</span><span>${money(it.price)} c/u</span></div></div><div class="rt"><span class="price">${money(p*it.q)}</span><span>${qty(k,it.q)}</span></div></li>`;
+    const c=card(it),both=c.N!=null&&c.F!=null;
+    const vtxt=both?`<select class="vsel" data-k="${k}" aria-label="Variante"><option value="N"${it.v==="N"?" selected":""}>Normal ${money(c.N)}</option><option value="F"${it.v==="F"?" selected":""}>Foil ${money(c.F)}</option></select>`:`<span class="tag">${c.F!=null?"Foil":"Normal"}</span>`;
+    return `<li class="card"><button type="button" class="thumb" data-pid="${c.pid}" aria-label="Ver imagen de ${esc(c.name)}"><img loading="lazy" src="${img(c.pid,200)}" alt=""></button><div class="info"><div class="nm">${esc(c.name)}</div><div class="meta"><span class="rar ${c.r}" style="width:18px;height:18px;font-size:10px" title="${RAR[c.r]||""}">${c.r}</span><span class="tag">${esc(SETABBR[c.set]||"")}</span>${vtxt}<a href="${tcgLink(c.pid)}" target="_blank" rel="noopener">TCGplayer ↗</a></div></div><div class="rt"><span class="price">${money(p*it.q)}</span><span>${qty(k,it.q)}</span></div></li>`;
+  }).join("");
+  const n=L.reduce((a,it)=>a+it.q,0);
+  document.getElementById("c"+i).innerHTML=(n===1?"1 carta":n+" cartas")+(S.example?' · <span class="example">Ejemplo</span>':"");
+  document.getElementById("ft"+i).textContent=money(total(i));
+}
+function verdict(){const a=total(0),b=total(1),hi=Math.max(a,b),d=Math.abs(a-b);return {a,b,d,pct:hi?d/hi*100:0,lo:a<b?0:1};}
+function renderMeter(){
+  const {a,b,d,pct,lo}=verdict(),n=S.names;
+  document.getElementById("w1").textContent=n[0]+" da";document.getElementById("w2").textContent=n[1]+" da";
+  document.getElementById("t1").textContent=money(a);document.getElementById("t2").textContent=money(b);
+  const pill=document.getElementById("pill"),diff=document.getElementById("diff"),hint=document.getElementById("hint");
+  const sa=a+b?a/(a+b)*100:50;
+  document.getElementById("ba").style.width=sa+"%";document.getElementById("bb").style.width=(100-sa)+"%";
+  if(!S.sides[0].length||!S.sides[1].length){
+    pill.className="pill idle";pill.textContent="Faltan cartas";diff.textContent="—";
+    hint.textContent=!S.sides[0].length&&!S.sides[1].length?"Busca una carta en cada lado para empezar.":`Agrega lo que entrega ${!S.sides[0].length?n[0]:n[1]}.`;return;}
+  diff.textContent=`Dif. ${money(d)} · ${pct.toFixed(1)}%`;
+  if(pct<=10){pill.className="pill good";pill.textContent="Tradeo justo";hint.textContent=d<0.01?"Valores idénticos.":`Diferencia menor al 10%. ${n[1-lo]} entrega un poco más.`;}
+  else{pill.className="pill "+(pct<=25?"warn":"bad");pill.textContent=pct<=25?"Algo desbalanceado":"Desbalanceado";
+    hint.textContent=`Favorece a ${n[lo]}. Para equilibrar, ${n[lo]} debería agregar unos ${money(d)}, o ${n[1-lo]} quitar algo de ese valor.`;}
+}
+function render(){renderList(0);renderList(1);renderMeter();
+  document.getElementById("cur-usd").setAttribute("aria-pressed",cur==="USD");document.getElementById("cur-clp").setAttribute("aria-pressed",cur==="CLP");
+  document.getElementById("fxwrap").hidden=cur!=="CLP";document.getElementById("cp0").placeholder=document.getElementById("cp1").placeholder=cur==="USD"?"US$":"CLP";}
+
+document.getElementById("cur-usd").onclick=()=>{cur="USD";save();render();};
+document.getElementById("cur-clp").onclick=()=>{cur="CLP";save();render();};
+const fxi=document.getElementById("fx");fxi.value=fx;fxi.addEventListener("input",()=>{const v=parseFloat(fxi.value);if(v>0){fx=v;save();render();}});
+let armed=false,armT;
+document.getElementById("reset").onclick=e=>{const b=e.currentTarget;
+  if(!armed){armed=true;b.textContent="¿Borrar todo? Confirmar";armT=setTimeout(()=>{armed=false;b.textContent="Nuevo tradeo";},3000);return;}
+  clearTimeout(armT);armed=false;b.textContent="Nuevo tradeo";S={names:S.names,sides:[[],[]],example:false};save();render();toast("Tradeo nuevo");};
+function summary(){
+  const {a,b,d,pct,lo}=verdict(),n=S.names;
+  const side=i=>S.sides[i].map(it=>`  • ${it.q>1?it.q+"× ":""}${itemName(it)}${it.custom?" (manual)":` [${SETABBR[card(it).set]}${it.v==="F"?", foil":""}]`} — ${money(itemPrice(it)*it.q)}`).join("\n")||"  (nada)";
+  return `Tradeo SWU\n${n[0]} entrega (${money(a)}):\n${side(0)}\n${n[1]} entrega (${money(b)}):\n${side(1)}\nDiferencia: ${money(d)} (${pct.toFixed(1)}%)${pct>10?` · favorece a ${n[lo]}`:" · justo"}\n${document.getElementById("asof").textContent}\n${location.href.split("#")[0]}`;
+}
+document.getElementById("copy").onclick=async()=>{const t=summary();
+  try{await navigator.clipboard.writeText(t);toast("Resumen copiado");}
+  catch(e){const ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");toast("Resumen copiado");}catch(_){toast("No se pudo copiar");}ta.remove();}};
+let tt;function toast(m){const t=document.getElementById("toast");t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,1800);}
+render();
+})();
+</script>
+</body>
+</html>
