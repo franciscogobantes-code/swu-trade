@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#16202c">
+<meta name="theme-color" content="#05070d">
+<meta name="color-scheme" content="light">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SWU Trade">
@@ -11,9 +12,9 @@
 <title>SWU Trade Machine</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://tcgplayer-cdn.tcgplayer.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
-html{-webkit-text-size-adjust:100%}body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}
 :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 /* Layout: marcador tipo "trade machine" — dos columnas enfrentadas (Persona 1 rebelde / Persona 2 imperial) con un medidor central de balance */
 :root{
@@ -24,14 +25,8 @@ html{-webkit-text-size-adjust:100%}body{margin:0}img{max-width:100%}[hidden]{dis
   --body:"IBM Plex Sans",system-ui,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,monospace;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#0f141b; --panel:#18202a; --line:#2b3644; --fg:#e7ecf2; --muted:#93a1b2;
-  --p1:#ec6a4f; --p1-soft:#3a201b; --p2:#6ea4dd; --p2-soft:#18283a;
-  --good:#5cc489; --warn:#e3a94b; --bad:#ec6a6a; --chip:#232d3a; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#0f141b; --panel:#18202a; --line:#2b3644; --fg:#e7ecf2; --muted:#93a1b2;
-  --p1:#ec6a4f; --p1-soft:#3a201b; --p2:#6ea4dd; --p2-soft:#18283a;
-  --good:#5cc489; --warn:#e3a94b; --bad:#ec6a6a; --chip:#232d3a; color-scheme:dark}
+
+
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font:15px/1.45 var(--body);padding-inline:16px;padding-block:20px 48px}
 .wrap{max-width:1180px;margin:0 auto;display:grid;gap:18px}
@@ -153,25 +148,95 @@ html,body{max-width:100%;overflow-x:hidden}
   .score .amt{font-size:30px}
   .results{left:8px;right:8px}
 }
+/* ===== Rediseño moderno ===== */
+:root{--display:"Chakra Petch","Arial Narrow",sans-serif;--body:"Manrope",system-ui,sans-serif;--r:16px;
+  --bg:#f2f4f8;--panel:#ffffff;--line:#e2e6ee;--shadow:0 1px 2px rgba(16,24,40,.05),0 8px 24px rgba(16,24,40,.06)}
+
+
+body{padding-block:0 96px;font-family:var(--body)}
+.banner{position:relative;margin-inline:-16px;min-height:260px;display:grid;grid-template-columns:minmax(0,1fr);justify-content:stretch;align-items:end;overflow:hidden;background:#05070d;color:#fff;isolation:isolate}
+.banner canvas{position:absolute;inset:0;width:100%;height:100%;z-index:-1}
+.banner:after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(5,7,13,0) 35%,rgba(5,7,13,.85) 100%)}
+.banner-in{max-width:1180px;width:100%;justify-self:center;margin:0 auto;padding:28px 16px 20px;display:grid;gap:8px;justify-items:start}
+.eyebrow{font:600 12px var(--body);letter-spacing:.14em;text-transform:uppercase;color:#9fb7d8}
+.banner h1{font:700 clamp(40px,8vw,72px)/.95 var(--display);margin:0;letter-spacing:.01em;text-transform:uppercase;color:#fff}
+.banner h1 .t1{color:#ff6b4f}.banner h1 .t2{color:#6aaef5}
+.banner .sub{color:#c8d3e3;max-width:52ch;margin:2px 0 4px;font-size:15px}
+.chip{display:inline-flex;align-items:center;gap:6px;font:600 12px var(--body);padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#e6eefa;backdrop-filter:blur(6px)}
+.chip:before{content:"";width:7px;height:7px;border-radius:50%;background:#4ade80;box-shadow:0 0 8px #4ade80}
+.wrap{gap:16px;padding-top:16px}
+.tools{position:relative;z-index:2;margin-top:10px;width:100%;padding:8px;border-radius:14px;background:rgba(18,25,37,.55);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(10px);display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tools .grow{flex:1}
+.tools button,.tools .seg{border-radius:10px}
+.tools>button{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16);color:#fff}
+.tools>button:hover{background:rgba(255,255,255,.16)}
+.tools .seg{border-color:rgba(255,255,255,.16)}
+.tools .seg button{background:transparent;color:#cfd9e8}
+.tools .seg button[aria-pressed="true"]{background:#fff;color:#0a0e15}
+.tools .fx{color:#cfd9e8}
+.meter{border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:20px}
+.score .amt{font-family:var(--display);font-weight:700}
+.score .who{font-family:var(--body);font-weight:700;font-size:12px}
+.pill{border-radius:999px;padding:6px 12px;font-family:var(--body);font-weight:800;letter-spacing:.06em}
+.bar{height:10px}
+.person{border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.person .top{border-bottom:0;padding:14px 16px 6px;gap:10px}
+.person .top:before{content:"";width:10px;height:10px;border-radius:50%;background:var(--c);box-shadow:0 0 0 4px color-mix(in srgb,var(--c) 22%,transparent);flex:none}
+.person .top input{font:700 22px var(--display);letter-spacing:.02em}
+.search{background:transparent;padding:8px 16px 12px}
+.search input,.search select{border-radius:12px;padding:10px 12px;background:var(--bg);border-color:var(--line)}
+.search input:focus,.search select:focus{border-color:var(--c);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 25%,transparent)}
+.results{border-radius:14px;box-shadow:0 16px 40px rgba(0,0,0,.22)}
+.card{border-bottom:1px solid var(--line);padding:12px 16px}
+.thumb{width:48px;height:67px;border-radius:7px;box-shadow:0 2px 6px rgba(0,0,0,.18)}
+.tag{border-radius:6px}
+.vsel{border-radius:8px}
+.qty{border-radius:10px}
+.foot{padding:12px 16px;background:color-mix(in srgb,var(--c) 6%,var(--panel))}
+.foot strong{font-family:var(--display);font-size:18px;color:var(--c)}
+.note{font-size:12px}
+.dock{display:none}
+@media (max-width:760px){
+  .banner{min-height:220px}
+  .banner-in{padding:22px 16px 16px}
+  .tools button{font-size:14px;padding:9px 10px}
+  .tools .grow{display:none}
+  .tools>button{flex:1}
+  .dock{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:15;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:10px 14px;border-radius:16px;background:rgba(10,14,21,.88);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.1);box-shadow:0 10px 30px rgba(0,0,0,.35);color:#fff;font:700 18px var(--display);transition:transform .25s ease,opacity .25s}
+  .dock .d1{color:#ff8a6b}.dock .d2{color:#8cc4ff;text-align:right}
+  .dock .pill{font-size:10px;padding:5px 9px}
+  .dock.off{transform:translateY(140%);opacity:0}
+}
+@media (prefers-reduced-motion:reduce){.dock{transition:none}}
+
+.credits{display:grid;gap:12px;margin-top:8px;padding-top:16px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);line-height:1.55}
+.credits .how{margin:0;max-width:80ch}
+.credits .cred{display:grid;gap:6px;max-width:80ch}
+.credits strong{color:var(--fg)}
+.credits a{color:inherit;text-decoration-thickness:1px;text-underline-offset:2px}
 .foot-note{display:flex;flex-wrap:wrap;gap:4px 14px}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div>
-      <h1><span>SWU</span> Trade <b>Machine</b></h1>
-      <p class="sub">Arma un tradeo de Star Wars: Unlimited y compara el valor de lo que da cada persona. <span id="asof">Cargando precios…</span></p>
-    </div>
+<header class="banner">
+  <canvas id="hyper" aria-hidden="true"></canvas>
+  <div class="banner-in">
+    <span class="eyebrow">Simulador de tradeos · Star Wars: Unlimited</span>
+    <h1><span class="t1">SWU</span> Trade <span class="t2">Machine</span></h1>
+    <p class="sub">Arma el tradeo, compara el valor de lo que da cada persona y mira al instante si es justo.</p>
+    <span class="chip" id="asof" title="Fuente: TCGplayer">Cargando precios…</span>
     <div class="tools">
       <div class="seg" role="group" aria-label="Moneda">
         <button id="cur-usd" aria-pressed="true">USD</button><button id="cur-clp" aria-pressed="false">CLP</button>
       </div>
       <label class="fx" id="fxwrap" hidden>1 USD = <input id="fx" type="number" min="1" step="1" value="950"> CLP</label>
-      <button id="copy">Copiar resumen</button>
+      <span class="grow"></span>
+      <button id="copy">Copiar</button>
       <button id="reset">Nuevo tradeo</button>
     </div>
-  </header>
+  </div>
+</header>
+<div class="wrap">
 
   <section class="meter" aria-live="polite">
     <div class="score">
@@ -185,8 +250,15 @@ html,body{max-width:100%;overflow-x:hidden}
 
   <div class="board" id="board"><div class="loading" id="loading">Cargando cartas y precios…</div></div>
 
-  <p class="note">Valores = precio de mercado de TCGplayer, actualizado automáticamente cada día (vía tcgcsv.com). Imágenes de TCGplayer. Pasa el mouse sobre una miniatura para agrandarla o tócala para verla en grande. El veredicto es "Justo" si la diferencia es de hasta 10% del lado mayor. Tu tradeo queda guardado en este dispositivo.</p>
+  <footer class="credits">
+    <p class="how">Pasa el mouse sobre una miniatura para agrandarla o tócala para verla en grande. El veredicto es "Justo" si la diferencia es de hasta 10% del lado mayor. Tu tradeo queda guardado en este dispositivo.</p>
+    <div class="cred">
+      <div><strong>Precios e imágenes de cartas:</strong> <a href="https://www.tcgplayer.com/search/star-wars-unlimited/product?productLineName=star-wars-unlimited" target="_blank" rel="noopener">TCGplayer</a>. Se usa el precio de mercado (Market Price) de cada carta, obtenido a diario mediante <a href="https://tcgcsv.com" target="_blank" rel="noopener">TCGCSV</a>, que publica los datos públicos de TCGplayer.</div>
+      <div>Star Wars: Unlimited es un juego de Fantasy Flight Games. Star Wars y sus personajes son © y ™ de Lucasfilm Ltd. Este es un sitio de fans sin fines de lucro, no afiliado ni respaldado por TCGplayer, Fantasy Flight Games ni Lucasfilm.</div>
+    </div>
+  </footer>
 </div>
+<div class="dock" id="dock" aria-hidden="true"><span class="d1" id="d1">$0</span><span class="pill idle" id="dpill">—</span><span class="d2" id="d2">$0</span></div>
 <div class="toast" id="toast" hidden></div>
 <div class="zoom" id="zoom" hidden aria-hidden="true"><img id="zoomimg" alt=""></div>
 <div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Imagen de la carta">
@@ -250,7 +322,7 @@ const setOpts='<option value="">Todas las expansiones</option>'+DATA.sets.map(([
   <div class="foot"><span id="c${i}">0 cartas</span><span>Total <strong id="ft${i}">$0</strong></span></div>`;
   board.appendChild(el);
   const name=el.querySelector("#name"+i);name.value=S.names[i];
-  name.addEventListener("input",()=>{S.names[i]=name.value||("Persona "+(i+1));save();renderMeter();});
+  name.addEventListener("input",()=>{S.names[i]=name.value||("Persona "+(i+1));save();renderMeter();dock();});
   const q=el.querySelector("#q"+i),sel=el.querySelector("#s"+i),res=el.querySelector("#r"+i);
   let hits=[],hi=0;
   const search=()=>{
@@ -334,7 +406,9 @@ function renderMeter(){
   else{pill.className="pill "+(pct<=25?"warn":"bad");pill.textContent=pct<=25?"Algo desbalanceado":"Desbalanceado";
     hint.textContent=`Favorece a ${n[lo]}. Para equilibrar, ${n[lo]} debería agregar unos ${money(d)}, o ${n[1-lo]} quitar algo de ese valor.`;}
 }
-function render(){renderList(0);renderList(1);renderMeter();
+function dock(){const p=document.getElementById("pill");document.getElementById("d1").textContent=document.getElementById("t1").textContent;document.getElementById("d2").textContent=document.getElementById("t2").textContent;const dp=document.getElementById("dpill");dp.className=p.className;dp.textContent=p.textContent;}
+const meterEl=document.querySelector(".meter");if("IntersectionObserver" in window)new IntersectionObserver(([e])=>document.getElementById("dock").classList.toggle("off",e.isIntersecting)).observe(meterEl);
+function render(){renderList(0);renderList(1);renderMeter();dock();
   document.getElementById("cur-usd").setAttribute("aria-pressed",cur==="USD");document.getElementById("cur-clp").setAttribute("aria-pressed",cur==="CLP");
   document.getElementById("fxwrap").hidden=cur!=="CLP";document.getElementById("cp0").placeholder=document.getElementById("cp1").placeholder=cur==="USD"?"US$":"CLP";}
 
@@ -355,6 +429,20 @@ document.getElementById("copy").onclick=async()=>{const t=summary();
   catch(e){const ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");toast("Resumen copiado");}catch(_){toast("No se pudo copiar");}ta.remove();}};
 let tt;function toast(m){const t=document.getElementById("toast");t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,1800);}
 render();
+
+// ---- Banner hiperespacio (original) ----
+(function(){const cv=document.getElementById("hyper");if(!cv)return;const x=cv.getContext("2d");let W,H,stars=[];const N=260;
+function size(){const r=cv.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);W=cv.width=r.width*d;H=cv.height=r.height*d;}
+function star(){return {a:Math.random()*Math.PI*2,r:Math.random()*.9+.05,s:Math.random()*.004+.0015,h:Math.random()<.15?28:(Math.random()<.5?210:200)};}
+size();for(let i=0;i<N;i++)stars.push(star());addEventListener("resize",size);
+const still=matchMedia("(prefers-reduced-motion:reduce)").matches;
+function frame(){x.fillStyle="rgba(5,7,13,.35)";x.fillRect(0,0,W,H);const cx=W*.72,cy=H*.42,R=Math.hypot(W,H)*.6;
+  for(const s of stars){const r0=s.r*R,r1=(s.r+s.s*14)*R;const c=Math.cos(s.a),sn=Math.sin(s.a);
+    x.strokeStyle=`hsla(${s.h},90%,${70+s.r*25}%,${Math.min(1,s.r*1.4)})`;x.lineWidth=Math.max(1,s.r*2.4*(W/900));
+    x.beginPath();x.moveTo(cx+c*r0,cy+sn*r0*.6);x.lineTo(cx+c*r1,cy+sn*r1*.6);x.stroke();
+    if(!still){s.r+=s.s*(.6+s.r*2);if(s.r>1.2)Object.assign(s,star(),{r:.02});}}
+  if(!still)requestAnimationFrame(frame);}
+x.fillStyle="#05070d";x.fillRect(0,0,W,H);if(still){for(let i=0;i<3;i++)frame();}else frame();})();
 })();
 </script>
 </body>
